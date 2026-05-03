@@ -22,8 +22,8 @@ import top.ribs.scguns.client.handler.AimingHandler;
 import top.ribs.scguns.init.ModSyncedDataKeys;
 
 /**
- * Event handler for combat mechanics integration between Epic Fight and Scorched Guns.
- * Handles stamina reduction when firing weapons.
+ * Synchronizes combat mechanics between Epic Fight and Scorched Guns,
+ * primarily managing stamina consumption during weapon use.
  */
 @EventBusSubscriber(modid = EpicScorch.MOD_ID, bus = EventBusSubscriber.Bus.FORGE)
 public class CombatEventHandler {
@@ -42,7 +42,7 @@ public class CombatEventHandler {
 
             EpicFightCapabilities.getUnparameterizedEntityPatch(player, PlayerPatch.class).ifPresent(playerPatch -> {
                 if (!playerPatch.hasStamina(requiredStamina)) {
-                    event.setCanceled(true); // Block the shot if there isn't enough stamina
+                    event.setCanceled(true); // Cancel shot if stamina is insufficient
                 }
             });
         }
@@ -50,7 +50,7 @@ public class CombatEventHandler {
 
     @SubscribeEvent
     public static void onGunFirePost(GunFireEvent.Post event) {
-        if (event.isClient()) return; // Consume stamina only on the server to ensure synchronization
+        if (event.isClient()) return; // Server-side only to ensure atomic stamina synchronization
         if (!EpicScorchConfig.ENABLE_STAMINA_REDUCTION.get()) return;
 
         Player player = event.getEntity();
@@ -79,25 +79,25 @@ public class CombatEventHandler {
                 try {
                     return Float.parseFloat(parts[1].trim());
                 } catch (NumberFormatException e) {
-                    return 0.0f; // Invalid override, do not consume stamina as a precaution
+                    return 0.0f; // Default to zero consumption if configuration is malformed
                 }
             }
         }
 
         Gun modifiedGun = gunItem.getModifiedGun(stack);
         
-        // Support both old and new SCG versions by checking both General and Projectile NBT
+        // Extract recoil data from NBT, supporting legacy and current Scorched Guns formats
         CompoundTag generalNbt = modifiedGun.getGeneral().serializeNBT();
         CompoundTag projectileNbt = modifiedGun.getProjectile().serializeNBT();
         
         float recoilAngle = generalNbt.contains("RecoilAngle") ? generalNbt.getFloat("RecoilAngle") 
                           : projectileNbt.getFloat("RecoilAngle");
         
-        // Apply recoil modifiers from attachments and enchantments
+        // Incorporate recoil modifiers from attachments and enchantments
         float modifier = 1.0f - GunModifierHelper.getRecoilModifier(stack);
         modifier *= GunEnchantmentHelper.getRecoilModifier(player, stack);
 
-        // Add ADS reduction if aiming
+        // Apply ADS recoil reduction if aiming
         float adsReduction = generalNbt.contains("RecoilAdsReduction") ? generalNbt.getFloat("RecoilAdsReduction") 
                            : projectileNbt.getFloat("RecoilAdsReduction");
 

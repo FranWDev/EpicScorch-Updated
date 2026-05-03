@@ -31,7 +31,7 @@ public class AbstractClientPlayerPatchMixin {
     private static final int AIM_LEAVE_HYSTERESIS = 10; // Increased to bridge roll gaps
     private static final Map<UUID, Integer> aimHoldCounters = new HashMap<>();
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onCompositeMotion(UpdatePlayerMotionEvent.CompositeLayer event) {
         if (!(event.getPlayerPatch().getOriginal() instanceof AbstractClientPlayer))
             return;
@@ -53,9 +53,8 @@ public class AbstractClientPlayerPatchMixin {
         boolean reloading = isActuallyReloading(player);
         boolean stoppingReload = isStoppingReload(stack);
 
-        // Fix Bug 1: When restricted (sprinting, dodging, or in cancel-cooldown), zero
-        // the hysteresis counter immediately so it doesn't keep LivingMotions.AIM active
-        // for 10 extra ticks, which was creating "animation fighting" post-cancellation.
+        // Reset hysteresis counter immediately during restrictions (sprinting, dodging, cooldown)
+        // to prevent LivingMotions.AIM from persisting and causing animation conflicts.
         if (restricted) {
             aimHoldCounters.put(id, 0);
         }
@@ -105,7 +104,9 @@ public class AbstractClientPlayerPatchMixin {
                 CompoundTag tag = stack.getOrCreateTag();
                 String reloadState = tag.getString("scguns:ReloadState");
 
-                if (reloadState.equals("RELOAD") || reloadState.equals("LOADING")) {
+                if (reloadState.equals("RELOAD") || reloadState.equals("LOADING") || 
+                    reloadState.equals("RELOAD_LOOP") || reloadState.equals("START") || 
+                    reloadState.equals("STARTING")) {
                     animator.playAnimation(reloadAnimAsset, 0.0F);
                 } else if (ModSyncedDataKeys.RELOADING.getValue(player)) {
                     ReloadHandler.get().setReloading(false);

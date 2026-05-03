@@ -36,9 +36,9 @@ public abstract class RenderEngineMixin {
                 EntityState state = playerPatch.getEntityState();
                 boolean isInaction = state.inaction();
                 
-                // Transition detection: Just finished rolling/dashing
+                // Detect transition from inaction (e.g., rolling/dashing) to active state.
                 if (epicscorch$wasInaction && !isInaction) {
-                    // Reset the equip progress to 0 to trigger the "draw weapon" animation
+                    // Reset equip progress to zero to trigger the weapon draw animation.
                     ItemInHandRenderer itemRenderer = mc.getEntityRenderDispatcher().getItemInHandRenderer();
                     if (itemRenderer != null) {
                         ((ItemInHandRendererAccessor) itemRenderer).setMainHandHeight(0.0f);
@@ -48,7 +48,7 @@ public abstract class RenderEngineMixin {
                 epicscorch$wasInaction = isInaction;
 
                 if (isInaction) {
-                    return; // Let Epic Fight take over
+                    return; // Delegate rendering to Epic Fight during inaction.
                 }
             }
             

@@ -11,30 +11,29 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 /**
- * Prevents ammo increment when player is in dodge/roll on server side.
- * Blocks increaseAmmo() from executing during combat actions.
+ * Prevents ammo from being added while the player is performing combat actions or sprinting.
+ * Jumping does not block ammo increment.
  */
 @Mixin(ReloadTracker.class)
 public class ReloadTrackerMixin {
 
     @Inject(method = "increaseAmmo", at = @At("HEAD"), cancellable = true)
-    private void blockAmmoIncreaseDuringDodge(Player player, CallbackInfo ci) {
-        if (player == null) return;
-        if (player.level().isClientSide) return;
+    private void blockAmmoIncreaseDuringCombatAction(Player player, CallbackInfo ci) {
+        if (player == null || player.level().isClientSide) return;
 
-        // Block if sprinting
         if (player.isSprinting()) {
             ci.cancel();
             return;
         }
 
-        // Block if in combat action (dodge/roll)
+        // Allow ammo increase while airborne (jumping)
+        if (!player.onGround()) {
+            return;
+        }
+
         PlayerPatch<?> patch = EpicFightCapabilities.getEntityPatch(player, PlayerPatch.class);
-        if (patch != null && patch.isEpicFightMode()) {
-            EntityState state = patch.getEntityState();
-            if (state.inaction()) {
-                ci.cancel();
-            }
+        if (patch != null && patch.isEpicFightMode() && patch.getEntityState().inaction()) {
+            ci.cancel();
         }
     }
 }

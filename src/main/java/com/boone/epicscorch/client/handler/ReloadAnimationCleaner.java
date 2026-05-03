@@ -15,13 +15,15 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 
 /**
- * Detects when dodge ends (inaction() true → false) and forces reload layer to stay off.
- * Epic Fight re-activates RELOAD layer after dodge because isUsingItem() remains true.
+ * Detects when dodge ends (inaction() true → false) and forces reload layer to
+ * stay off.
+ * Epic Fight re-activates RELOAD layer after dodge because isUsingItem()
+ * remains true.
  * This catches the transition and prevents re-activation.
  */
 @Mod.EventBusSubscriber(modid = "epicscorch", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ReloadAnimationCleaner {
-    
+
     private static boolean wasInaction = false;
 
     @SubscribeEvent
@@ -31,7 +33,7 @@ public class ReloadAnimationCleaner {
 
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        
+
         if (player == null) {
             wasInaction = false;
             return;
@@ -62,7 +64,7 @@ public class ReloadAnimationCleaner {
                         // Ignore errors in cleanup
                     }
                 }
-                
+
                 // Clean NBT flags so Epic Fight doesn't re-detect reload
                 CompoundTag tag = stack.getOrCreateTag();
                 tag.putBoolean("scguns:IsReloading", false);

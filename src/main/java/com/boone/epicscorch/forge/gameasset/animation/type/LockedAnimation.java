@@ -28,12 +28,12 @@ public class LockedAnimation extends StaticAnimation {
 
             float totalTime = animation.getTotalTime();
             if (elapsedTime >= totalTime - 0.1F) {
-               // Only allow looping if Scorched Guns explicitly says we are in the middle of a reload cycle.
-               // Otherwise, freeze at the end to prevent "infinite" loops after the reload is done.
+               // Loop only if Scorched Guns indicates an active multi-bullet reload cycle.
+               // Otherwise, lock at the final frame to prevent indefinite looping post-reload.
                if (isLoopingReload(entitypatch)) {
                   return 1.0F;
                } else {
-                  return 0.0F; // Freeze at the end
+                  return 0.0F; // Lock at the final frame
                }
             }
             return 1.0F;
@@ -49,8 +49,8 @@ public class LockedAnimation extends StaticAnimation {
       CompoundTag tag = stack.getOrCreateTag();
       String reloadState = tag.getString("scguns:ReloadState");
       
-      // "RELOAD" is the state used for multi-bullet looping reloads in Scorched Guns.
-      // Other states like "START", "STOP" or "NONE" should not loop the animation.
+      // "RELOAD" signifies an active multi-stage reload in Scorched Guns.
+      // Transitional states (START, STOP, NONE) should not trigger animation looping.
       return reloadState.equals("RELOAD");
    }
 

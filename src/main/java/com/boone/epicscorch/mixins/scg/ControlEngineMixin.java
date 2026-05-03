@@ -15,7 +15,7 @@ import yesman.epicfight.client.events.engine.ControlEngine;
 import com.boone.epicscorch.config.EpicScorchConfig;
 
 /**
- * Prevents Epic Fight's combat actions from interfering with gun firing.
+ * Mitigates input conflict by preventing Epic Fight combat actions while weapons are active or aiming.
  */
 @Mixin(value = ControlEngine.class, remap = false)
 public abstract class ControlEngineMixin {
@@ -25,7 +25,7 @@ public abstract class ControlEngineMixin {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
             ItemStack stack = player.getMainHandItem();
-            // Prevent Epic Fight attacks while holding a gun or aiming
+            // Suppress Epic Fight melee attacks while holding firearms or aiming.
             if (stack.getItem() instanceof GunItem || AimingHandler.get().isAiming()) {
                 ci.cancel();
             }

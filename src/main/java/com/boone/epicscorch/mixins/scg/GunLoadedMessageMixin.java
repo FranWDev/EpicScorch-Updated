@@ -17,14 +17,14 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 
 /**
- * Blocks ammo syncing when in combat (dodge/roll).
- * Intercepts right before C2SMessageGunLoaded is sent to prevent increaseAmmo() on server.
+ * Intercepts ammo synchronization packets during high-intensity combat actions.
+ * Prevents the server-side increaseAmmo() call if the player is currently dodging or rolling.
  */
 @Mixin(PacketHandler.class)
 public class GunLoadedMessageMixin {
 
-    // This is a placeholder. The actual implementation requires hooking at the right point.
-    // Will be handled by preventing the packet send in ReloadHandler via a separate approach.
+    // TODO: Finalize implementation upon defining precise hook point. 
+    // Currently managed via ReloadHandler as a fallback.
 }
 
 

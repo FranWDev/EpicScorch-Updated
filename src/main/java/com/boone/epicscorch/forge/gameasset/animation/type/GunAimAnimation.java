@@ -20,8 +20,8 @@ public class GunAimAnimation extends AimAnimation {
    public GunAimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
       super(transitionTime, repeatPlay, accessor, path1, path2, path3, path4, armature);
 
-      // Override the built-in PLAY_SPEED_MODIFIER to also handle SCGuns ADS
-      // (the parent version only checks isUsingItem(), which SCGuns doesn't use for ADS).
+      // Extend speed modifier logic to support Scorched Guns ADS (Aim Down Sights).
+      // Parent implementation only accounts for vanilla item usage states.
       this.addProperty(
          StaticAnimationProperty.PLAY_SPEED_MODIFIER,
          (DynamicAnimation animation, LivingEntityPatch<?> entitypatch, float speed, float prevElapsedTime, float elapsedTime) -> {
@@ -29,7 +29,7 @@ public class GunAimAnimation extends AimAnimation {
                return 1.0F;
             }
 
-            // Freeze at final frame for SCGuns ADS or vanilla bow/crossbow usage
+            // Lock animation at the final frame during ADS or vanilla ranged weapon usage.
             boolean isAiming = AimingHandler.get().isAiming() || entitypatch.getOriginal().isUsingItem();
             if (isAiming) {
                return (this.getTotalTime() - elapsedTime) / this.getTotalTime();

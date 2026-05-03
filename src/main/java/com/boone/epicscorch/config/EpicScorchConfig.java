@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration class for EpicScorch Reforged.
- * Handles the toggles and multipliers for combat integration between Epic Fight and Scorched Guns.
+ * Configuration definitions for EpicScorch Reforged, handling combat balancing and integration toggles.
  */
 public class EpicScorchConfig {
     public static final ForgeConfigSpec SPEC;
