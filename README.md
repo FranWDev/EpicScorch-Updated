@@ -24,10 +24,11 @@ Firearms are now more than just point-and-click; they are integrated into the st
   - **Jumping:** You **cannot shoot or aim**.
   - **Dodging/Rolling:** All actions (**shooting, aiming, and reloading**) are blocked.
 
-- **Bullet Parrying:** Successfully parrying bullets now consumes significantly less stamina, rewarding skilled timing.
+- **Bullet Blocking:** Blocking bullets now consumes significantly less stamina, making it more viable to defend against firearms.
 - **Full Customization:** Every balancing feature can be tweaked or disabled via the mod's configuration file.
 
 ## 🗺️ Roadmap
+- [ ] **Rat King & Queen Weaponry:** Figure out how to implement animations for these guns (currently lacking compatible animations).
 - [ ] **Agility Enchantment:** A new enchantment designed to reduce combat movement restrictions for high-tier builds.
 - [ ] **Expanded Compatibility:** Reviewing interactions with mods like *Epic Parcool* and reaction to stun effects.
 - [ ] **Stability:** Working towards a fully stable port/bridge release in the coming weeks.
