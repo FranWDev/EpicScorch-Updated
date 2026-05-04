@@ -36,8 +36,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation project(':epicfight')
-    
+    modImplementation "curse.maven:epic-fight-mod-405076:7919289"
     modImplementation "curse.maven:scorched-guns-2-802940:7232063"
     modImplementation "curse.maven:framework-549225:5911986"
     modImplementation "curse.maven:geckolib-388172:5675221"
