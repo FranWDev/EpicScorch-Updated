@@ -7,7 +7,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -43,6 +46,12 @@ public class BalanceHandler {
     private static int restrictionCooldown = 0;
     private static int reloadCancelCooldown = 0;
     private static boolean currentTickRestricted = false;
+    private static int previousSlot = -1;
+    private static Item previousItem = null;
+    private static boolean wasReloadingLastTick = false;
+    private static boolean wasManualReloadLastTick = false;
+    private static int pendingResumeSlot = -1;
+    private static Item pendingResumeItem = null;
     private static final Map<Long, Long> lastAnimReset = new HashMap<>();
     private static final Map<UUID, Integer> stopTimeout = new HashMap<>();
 
@@ -145,8 +154,82 @@ public class BalanceHandler {
         if (player == null)
             return;
 
-        // --- NBT guarantees (must run before AimingHandler reads the item tag) ---
+        int currentSlot = player.getInventory().selected;
         ItemStack heldItem = player.getMainHandItem();
+        Item currentItem = heldItem.getItem();
+
+        if (pendingResumeSlot == currentSlot) {
+            if (pendingResumeItem == currentItem && currentItem instanceof GunItem
+                    && !ModSyncedDataKeys.RELOADING.getValue(player)) {
+                ReloadHandler.get().setReloading(true);
+            }
+            pendingResumeSlot = -1;
+            pendingResumeItem = null;
+        }
+
+        // --- Detect Item Swap / Drop without memory allocations ---
+        boolean slotChanged = previousSlot != currentSlot;
+        boolean itemChanged = previousItem != currentItem;
+
+        if (slotChanged || itemChanged) {
+            if (previousItem instanceof GunItem && wasReloadingLastTick) {
+                if (wasManualReloadLastTick) {
+                    ModSyncedDataKeys.RELOADING.setValue(player, false);
+                    ModSyncedDataKeys.AIMING.setValue(player, false);
+                    top.ribs.scguns.network.PacketHandler.getPlayChannel().sendToServer(new top.ribs.scguns.network.message.C2SMessageReload(false));
+                    top.ribs.scguns.network.PacketHandler.getPlayChannel().sendToServer(new top.ribs.scguns.network.message.C2SMessageAim(false));
+                    reloadCancelCooldown = 10;
+                
+                    // Clear any guns in inventory to remove lingering states before setting up new one
+                    for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                        ItemStack invStack = player.getInventory().getItem(i);
+                        if (invStack.getItem() instanceof GunItem && invStack.hasTag()) {
+                            // Skip clearing the new held item if we swapped to another gun!
+                            if (currentSlot == i) {
+                                continue;
+                            }
+                            clearReloadNbt(invStack.getOrCreateTag());
+                        }
+                    }
+                } else {
+                    if (previousSlot >= 0 && previousSlot < player.getInventory().getContainerSize()) {
+                        ItemStack previousStack = player.getInventory().getItem(previousSlot);
+                        if (previousStack.getItem() instanceof GunItem) {
+                            CompoundTag previousTag = previousStack.getOrCreateTag();
+                            if (previousStack.getItem() instanceof AnimatedGunItem animated) {
+                                animated.cleanupReloadState(previousTag);
+                            }
+                            clearReloadNbt(previousTag);
+                        }
+                    }
+
+                    pendingResumeSlot = previousSlot;
+                    pendingResumeItem = previousItem;
+                }
+            }
+        }
+        
+        previousSlot = currentSlot;
+        previousItem = currentItem;
+        wasReloadingLastTick = false;
+        wasManualReloadLastTick = false;
+
+        if (currentItem instanceof GunItem gunItem) {
+            CompoundTag tag = heldItem.getTag();
+            if (tag != null) {
+                wasReloadingLastTick = tag.getBoolean("scguns:IsReloading") ||
+                    tag.getString("scguns:ReloadState").contains("RELOAD") ||
+                    tag.getString("scguns:ReloadState").contains("START") ||
+                    ModSyncedDataKeys.RELOADING.getValue(player);
+            } else {
+                wasReloadingLastTick = ModSyncedDataKeys.RELOADING.getValue(player);
+            }
+
+            Gun gun = gunItem.getModifiedGun(heldItem);
+            wasManualReloadLastTick = gun.getReloads().getReloadType() == ReloadType.MANUAL;
+        }
+
+        // --- NBT guarantees (must run before AimingHandler reads the item tag) ---
         if (heldItem.getItem() instanceof GunItem) {
             CompoundTag tag = heldItem.getOrCreateTag();
 
@@ -242,6 +325,19 @@ public class BalanceHandler {
 
         if (forceCancelAim || forceCancelReload) {
             cancelAimAndReload(player, heldItem, forceCancelAim, forceCancelReload);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onScreenOpen(ScreenEvent.Opening event) {
+        if (event.getScreen() instanceof PauseScreen) {
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player != null) {
+                ItemStack heldItem = player.getMainHandItem();
+                if (heldItem.getItem() instanceof GunItem) {
+                    cancelAimAndReload(player, heldItem, true, true);
+                }
+            }
         }
     }
 
