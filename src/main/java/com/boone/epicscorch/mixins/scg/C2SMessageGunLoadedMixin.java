@@ -1,7 +1,7 @@
 package com.boone.epicscorch.mixins.scg;
 
+import com.mrcrayfish.framework.api.network.MessageContext;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,9 +19,8 @@ import java.util.function.Supplier;
 public class C2SMessageGunLoadedMixin {
 
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
-    private static void preventLoadedDuringAction(Supplier<NetworkEvent.Context> supplier, CallbackInfo ci) {
-        NetworkEvent.Context ctx = supplier.get();
-        ServerPlayer player = ctx.getSender();
+    private void preventLoadedDuringAction(C2SMessageGunLoaded message, MessageContext context, CallbackInfo ci) {
+        ServerPlayer player = context.getPlayer();
         if (player == null) return;
 
         // If the player is airborne, skip the RELOADING check entirely.
