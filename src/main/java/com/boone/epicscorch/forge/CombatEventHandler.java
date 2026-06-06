@@ -18,7 +18,6 @@ import top.ribs.scguns.util.GunEnchantmentHelper;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.List;
-import top.ribs.scguns.client.handler.AimingHandler;
 import top.ribs.scguns.init.ModSyncedDataKeys;
 
 /**
@@ -43,28 +42,12 @@ public class CombatEventHandler {
             EpicFightCapabilities.getUnparameterizedEntityPatch(player, PlayerPatch.class).ifPresent(playerPatch -> {
                 if (!playerPatch.hasStamina(requiredStamina)) {
                     event.setCanceled(true); // Cancel shot if stamina is insufficient
+                } else if (!player.level().isClientSide) {
+                    if (playerPatch instanceof ServerPlayerPatch serverPlayerPatch) {
+                        serverPlayerPatch.setStamina(Math.max(0.0f, serverPlayerPatch.getStamina() - requiredStamina));
+                        serverPlayerPatch.setStaminaRegenAwaitTicks(EpicScorchConfig.STAMINA_REGEN_DELAY.get());
+                    }
                 }
-            });
-        }
-    }
-
-    @SubscribeEvent
-    public static void onGunFirePost(GunFireEvent.Post event) {
-        if (event.isClient()) return; // Server-side only to ensure atomic stamina synchronization
-        if (!EpicScorchConfig.ENABLE_STAMINA_REDUCTION.get()) return;
-
-        Player player = event.getEntity();
-        if (player.isCreative() || player.isSpectator()) return;
-
-        ItemStack stack = event.getStack();
-        if (stack.getItem() instanceof GunItem gunItem) {
-            float requiredStamina = getRequiredStamina(player, stack, gunItem);
-            if (requiredStamina <= 0.0f) return;
-
-            EpicFightCapabilities.getUnparameterizedEntityPatch(player, ServerPlayerPatch.class).ifPresent(playerPatch -> {
-                float currentStamina = playerPatch.getStamina();
-                playerPatch.setStamina(Math.max(0.0f, currentStamina - requiredStamina));
-                playerPatch.setStaminaRegenAwaitTicks(EpicScorchConfig.STAMINA_REGEN_DELAY.get());
             });
         }
     }
@@ -101,14 +84,12 @@ public class CombatEventHandler {
         float adsReduction = generalNbt.contains("RecoilAdsReduction") ? generalNbt.getFloat("RecoilAdsReduction") 
                            : projectileNbt.getFloat("RecoilAdsReduction");
 
-        if (player.level().isClientSide) {
-            if (AimingHandler.get().isAiming()) {
-                modifier *= (1.0f - adsReduction);
-            }
-        } else {
-            if (ModSyncedDataKeys.AIMING.getValue(player)) {
-                modifier *= (1.0f - adsReduction);
-            }
+        // Use the synced AIMING data key — available server-side and safe on both sides.
+        // AimingHandler is client-only and must not be referenced here to avoid
+        // ClassNotFoundException on dedicated server, which would prevent this
+        // entire @EventBusSubscriber class from loading.
+        if (ModSyncedDataKeys.AIMING.getValue(player)) {
+            modifier *= (1.0f - adsReduction);
         }
         
         return recoilAngle * modifier * EpicScorchConfig.STAMINA_MULTIPLIER.get().floatValue();

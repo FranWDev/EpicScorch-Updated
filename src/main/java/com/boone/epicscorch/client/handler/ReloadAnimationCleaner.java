@@ -14,6 +14,8 @@ import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 
+import net.minecraftforge.api.distmarker.OnlyIn;
+
 /**
  * Detects when dodge ends (inaction() true → false) and forces reload layer to
  * stay off.
@@ -21,6 +23,7 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerP
  * remains true.
  * This catches the transition and prevents re-activation.
  */
+@OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = "epicscorch", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ReloadAnimationCleaner {
 

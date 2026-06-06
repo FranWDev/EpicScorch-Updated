@@ -8,10 +8,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import top.ribs.scguns.client.handler.AimingHandler;
 
+import net.minecraftforge.api.distmarker.OnlyIn;
+
 /**
  * Alternative event listener to prevent aiming while sprinting.
  * Backup to the Mixin approach for version compatibility.
  */
+@OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = "epicscorch", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class SprintAimingBlocker {
 

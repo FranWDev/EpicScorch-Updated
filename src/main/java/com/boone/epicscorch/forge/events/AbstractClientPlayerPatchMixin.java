@@ -25,6 +25,9 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
 
+import net.minecraftforge.api.distmarker.OnlyIn;
+
+@OnlyIn(Dist.CLIENT)
 @EventBusSubscriber(modid = "epicscorch", bus = EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class AbstractClientPlayerPatchMixin {
 

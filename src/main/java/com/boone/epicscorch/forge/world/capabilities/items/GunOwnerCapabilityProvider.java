@@ -14,6 +14,7 @@ import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.ribs.scguns.item.GunItem;
@@ -33,7 +34,7 @@ public class GunOwnerCapabilityProvider implements ICapabilityProvider {
    public static void onAttachCapabilitiesToItemStack(AttachCapabilitiesEvent<ItemStack> event) {
       ItemStack stack = event.getObject();
       if (stack == null || stack.isEmpty()) return;
-      
+
       Item item = stack.getItem();
       if (item instanceof GunItem || item instanceof GrenadeItem) {
           GunCapabilityProvider weaponProvider = new GunCapabilityProvider(stack);

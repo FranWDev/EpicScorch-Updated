@@ -1,5 +1,6 @@
 package com.boone.epicscorch.forge.world.capabilities.items;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,7 @@ import top.ribs.scguns.item.GrenadeItem;
 import top.ribs.scguns.item.GunItem;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 public class GunCapabilityProvider implements ICapabilityProvider, NonNullSupplier<CapabilityItem> {
    private final LazyOptional<CapabilityItem> optional = LazyOptional.of(this);
@@ -32,21 +34,48 @@ public class GunCapabilityProvider implements ICapabilityProvider, NonNullSuppli
       } catch (Exception ignored) {}
 
       try {
-          Method getGunMethod = item.getClass().getMethod("getModifiedGun", ItemStack.class);
-          Object gun = getGunMethod.invoke(item, itemStack);
-          Object general = gun.getClass().getMethod("getGeneral").invoke(gun);
-          Object grip = general.getClass().getMethod("getGripType", ItemStack.class).invoke(general, itemStack);
-          
-          Method idMethod = grip.getClass().getMethod("id");
-          Object idObj = idMethod.invoke(grip);
-          
-          if (idObj instanceof ResourceLocation loc) {
-              gripType = loc.getPath().toUpperCase();
-          } else {
-              gripType = idObj.toString().toUpperCase();
-              if (gripType.contains(":")) {
-                  gripType = gripType.substring(gripType.lastIndexOf(":") + 1);
+          if (item instanceof GunItem gunItem) {
+              Object gun = gunItem.getGun();
+              Object general = gun.getClass().getMethod("getGeneral").invoke(gun);
+              
+              // Access the gripType field directly to avoid getGripType(ItemStack)
+              // which internally calls getModifiedGun(ItemStack) — that can fail
+              // during AttachCapabilitiesEvent if item NBT is not yet initialized.
+              Object grip = null;
+              Class<?> cls = general.getClass();
+              while (cls != null && grip == null) {
+                  try {
+                      Field gripField = cls.getDeclaredField("gripType");
+                      gripField.setAccessible(true);
+                      grip = gripField.get(general);
+                  } catch (NoSuchFieldException ignored) {
+                      cls = cls.getSuperclass();
+                  }
               }
+              // Last resort: call the method directly
+              if (grip == null) {
+                  grip = general.getClass().getMethod("getGripType", ItemStack.class).invoke(general, itemStack);
+              }
+              
+               String resolvedGrip = null;
+               if (grip instanceof Enum<?> enumGrip) {
+                   resolvedGrip = enumGrip.name();
+               } else if (grip != null) {
+                   resolvedGrip = grip.toString();
+               }
+
+               if (resolvedGrip != null) {
+                   int commaIndex = resolvedGrip.indexOf(",");
+                   if (commaIndex != -1) {
+                       resolvedGrip = resolvedGrip.substring(0, commaIndex).trim();
+                   }
+                   gripType = resolvedGrip.toUpperCase();
+                   if (gripType.contains(":")) {
+                       gripType = gripType.substring(gripType.lastIndexOf(":") + 1);
+                   }
+               }
+          } else {
+              throw new Exception();
           }
       } catch (Exception e) {
           if (registryPath.contains("pistol") || registryPath.contains("revolver") || registryPath.contains("spirulida") || registryPath.contains("hand_cannon")) {

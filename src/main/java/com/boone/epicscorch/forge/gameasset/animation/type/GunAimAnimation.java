@@ -14,7 +14,7 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
-import top.ribs.scguns.client.handler.AimingHandler;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 public class GunAimAnimation extends AimAnimation {
    public GunAimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
@@ -30,7 +30,7 @@ public class GunAimAnimation extends AimAnimation {
             }
 
             // Lock animation at the final frame during ADS or vanilla ranged weapon usage.
-            boolean isAiming = AimingHandler.get().isAiming() || entitypatch.getOriginal().isUsingItem();
+            boolean isAiming = (FMLEnvironment.dist.isClient() && isAimingClientSafe()) || entitypatch.getOriginal().isUsingItem();
             if (isAiming) {
                return (this.getTotalTime() - elapsedTime) / this.getTotalTime();
             }
@@ -39,6 +39,29 @@ public class GunAimAnimation extends AimAnimation {
          }
       );
    }
+
+    private static java.lang.reflect.Method isAimingMethod = null;
+    private static Object aimingHandlerInstance = null;
+    private static boolean initialized = false;
+
+    private static boolean isAimingClientSafe() {
+        if (!initialized) {
+            try {
+                Class<?> handlerClass = Class.forName("top.ribs.scguns.client.handler.AimingHandler");
+                aimingHandlerInstance = handlerClass.getMethod("get").invoke(null);
+                isAimingMethod = handlerClass.getMethod("isAiming");
+            } catch (Exception ignored) {
+            }
+            initialized = true;
+        }
+        if (isAimingMethod != null && aimingHandlerInstance != null) {
+            try {
+                return (boolean) isAimingMethod.invoke(aimingHandlerInstance);
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
+    }
 
    @Override
    public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {

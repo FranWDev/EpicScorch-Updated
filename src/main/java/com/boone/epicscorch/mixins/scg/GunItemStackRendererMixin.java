@@ -4,10 +4,9 @@ import com.boone.epicscorch.forge.ModCapabilities;
 import com.boone.epicscorch.forge.world.capabilities.items.GunOwnerCapabilityProvider;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -16,11 +15,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import top.ribs.scguns.client.GunItemStackRenderer;
 import top.ribs.scguns.client.handler.GunRenderingHandler;
 
+@OnlyIn(Dist.CLIENT)
 @Mixin(GunItemStackRenderer.class)
-public class GunItemStackRendererMixin extends BlockEntityWithoutLevelRenderer {
-   public GunItemStackRendererMixin(BlockEntityRenderDispatcher blockEntityRenderDispatcher, EntityModelSet entityModelSet) {
-      super(blockEntityRenderDispatcher, entityModelSet);
-   }
+public class GunItemStackRendererMixin {
 
    @Overwrite(remap = false)
    public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack, MultiBufferSource source, int light, int overlay) {

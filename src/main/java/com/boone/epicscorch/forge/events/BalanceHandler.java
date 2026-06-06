@@ -33,12 +33,15 @@ import com.boone.epicscorch.mixins.scg.AimingHandlerAccessor;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 
+import net.minecraftforge.api.distmarker.OnlyIn;
+
 /**
  * Client-side balance layer between Epic Fight and Scorched Guns.
  * Centralises movement-based restriction logic and ensures that aiming and
  * reloading states are cancelled when necessary, while protecting the reload
  * state during a jump.
  */
+@OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = "epicscorch", value = Dist.CLIENT)
 public class BalanceHandler {
 
