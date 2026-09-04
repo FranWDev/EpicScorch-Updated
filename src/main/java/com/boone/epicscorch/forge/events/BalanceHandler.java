@@ -504,7 +504,9 @@ public class BalanceHandler {
     /** Cancels aiming and synchronises with the server. */
     private static void cancelAiming(LocalPlayer player) {
         if (AimingHandler.get().isAiming()) {
-            AimingHandler.get().aiming = false;
+            if (AimingHandler.get() instanceof AimingHandlerAccessor accessor) {
+                accessor.setAiming(false);
+            }
             ModSyncedDataKeys.AIMING.setValue(player, false);
             PacketHandler.getPlayChannel().sendToServer(new C2SMessageAim(false));
         }

@@ -120,7 +120,7 @@ public class Animations {
          0.05f, false, accessor, "biped/combat/grenade_arm", "biped/combat/grenade_arm", "biped/combat/grenade_arm", "biped/combat/grenade_arm", bipedArmature
       ));
       BIPED_GRENADE_THROW = builder.nextAccessor("biped/combat/grenade_throw", (accessor) -> new ReboundAnimation(
-         0.05f, false, accessor, "biped/combat/grenade_throw", "biped/combat/grenade_throw", "biped/combat/grenade_throw", "biped/combat/grenade_throw", bipedArmature
+         0.05f, accessor, "biped/combat/grenade_throw", "biped/combat/grenade_throw", "biped/combat/grenade_throw", "biped/combat/grenade_throw", bipedArmature
       ));
    }
 }

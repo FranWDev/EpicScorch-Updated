@@ -10,7 +10,6 @@
     "ReloadTrackerMixin"
   ],
   "client": [
-    "GunItemStackRendererMixin",
     "PlayerModelHandlerMixin",
     "ControlEngineMixin",
     "LocalPlayerPatchMixin",

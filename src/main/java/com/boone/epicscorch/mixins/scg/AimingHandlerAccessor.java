@@ -11,4 +11,7 @@ public interface AimingHandlerAccessor {
     
     @Accessor("normalisedAdsProgress")
     double getNormalisedAdsProgress();
+
+    @Accessor("aiming")
+    void setAiming(boolean aiming);
 }
