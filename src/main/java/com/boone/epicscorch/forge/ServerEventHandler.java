@@ -1,10 +1,10 @@
 package com.boone.epicscorch.forge;
 
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 
 public class ServerEventHandler {
    public static void registerServer() {
-      MinecraftForge.EVENT_BUS.register(ServerEventHandler.class);
-
+      NeoForge.EVENT_BUS.register(ServerEventHandler.class);
    }
 }
+
