@@ -2,29 +2,27 @@ package com.boone.epicscorch.forge;
 
 import com.boone.epicscorch.EpicScorch;
 import com.boone.epicscorch.config.EpicScorchConfig;
+import java.util.List;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import top.ribs.scguns.common.Gun;
 import top.ribs.scguns.event.GunFireEvent;
+import top.ribs.scguns.init.ModSyncedDataKeys;
 import top.ribs.scguns.item.GunItem;
+import top.ribs.scguns.util.GunEnchantmentHelper;
+import top.ribs.scguns.util.GunModifierHelper;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
-import top.ribs.scguns.util.GunModifierHelper;
-import top.ribs.scguns.util.GunEnchantmentHelper;
-import net.minecraft.nbt.CompoundTag;
-
-import java.util.List;
-import top.ribs.scguns.init.ModSyncedDataKeys;
 
 /**
  * Synchronizes combat mechanics between Epic Fight and Scorched Guns,
  * primarily managing stamina consumption during weapon use.
  */
-@EventBusSubscriber(modid = EpicScorch.MOD_ID, bus = EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = EpicScorch.MOD_ID)
 public class CombatEventHandler {
 
     @SubscribeEvent
@@ -53,7 +51,7 @@ public class CombatEventHandler {
     }
 
     private static float getRequiredStamina(Player player, ItemStack stack, GunItem gunItem) {
-        String registryName = ForgeRegistries.ITEMS.getKey(gunItem).toString();
+        String registryName = BuiltInRegistries.ITEM.getKey(gunItem).toString();
         List<? extends String> overrides = EpicScorchConfig.WEAPON_STAMINA_OVERRIDES.get();
         
         for (String override : overrides) {
@@ -69,20 +67,14 @@ public class CombatEventHandler {
 
         Gun modifiedGun = gunItem.getModifiedGun(stack);
         
-        // Extract recoil data from NBT, supporting legacy and current Scorched Guns formats
-        CompoundTag generalNbt = modifiedGun.getGeneral().serializeNBT();
-        CompoundTag projectileNbt = modifiedGun.getProjectile().serializeNBT();
-        
-        float recoilAngle = generalNbt.contains("RecoilAngle") ? generalNbt.getFloat("RecoilAngle") 
-                          : projectileNbt.getFloat("RecoilAngle");
+        float recoilAngle = modifiedGun.getGeneral().getRecoilAngle();
         
         // Incorporate recoil modifiers from attachments and enchantments
         float modifier = 1.0f - GunModifierHelper.getRecoilModifier(stack);
         modifier *= GunEnchantmentHelper.getRecoilModifier(player, stack);
 
         // Apply ADS recoil reduction if aiming
-        float adsReduction = generalNbt.contains("RecoilAdsReduction") ? generalNbt.getFloat("RecoilAdsReduction") 
-                           : projectileNbt.getFloat("RecoilAdsReduction");
+        float adsReduction = modifiedGun.getGeneral().getRecoilAdsReduction();
 
         // Use the synced AIMING data key — available server-side and safe on both sides.
         // AimingHandler is client-only and must not be referenced here to avoid
@@ -95,3 +87,4 @@ public class CombatEventHandler {
         return recoilAngle * modifier * EpicScorchConfig.STAMINA_MULTIPLIER.get().floatValue();
     }
 }
+
