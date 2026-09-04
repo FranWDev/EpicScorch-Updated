@@ -3,7 +3,7 @@
   "plugin": "com.boone.epicscorch.mixins.EpicScorchMixinPlugin",
   "minVersion": "0.8",
   "package": "com.boone.epicscorch.mixins.scg",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_21",
   "refmap": "EpicScorch.refmap.json",
   "mixins": [
     "CapabilityItemMixin",

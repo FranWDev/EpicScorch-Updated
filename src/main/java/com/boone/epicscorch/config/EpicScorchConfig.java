@@ -1,27 +1,26 @@
 package com.boone.epicscorch.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Configuration definitions for EpicScorch Reforged, handling combat balancing and integration toggles.
  */
 public class EpicScorchConfig {
-    public static final ForgeConfigSpec SPEC;
+    public static final ModConfigSpec SPEC;
 
-    public static final ForgeConfigSpec.BooleanValue ENABLE_STAMINA_REDUCTION;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_MULTIPLIER;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> WEAPON_STAMINA_OVERRIDES;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_LOCK_ON;
-    public static final ForgeConfigSpec.BooleanValue CANCEL_RELOAD_ON_ACTION;
-    public static final ForgeConfigSpec.BooleanValue CANCEL_AIM_ON_ACTION;
-    public static final ForgeConfigSpec.BooleanValue FORCE_CANCEL_AIM_WHILE_SPRINTING;
-    public static final ForgeConfigSpec.IntValue STAMINA_REGEN_DELAY;
+    public static final ModConfigSpec.BooleanValue ENABLE_STAMINA_REDUCTION;
+    public static final ModConfigSpec.DoubleValue STAMINA_MULTIPLIER;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> WEAPON_STAMINA_OVERRIDES;
+    public static final ModConfigSpec.BooleanValue DISABLE_LOCK_ON;
+    public static final ModConfigSpec.BooleanValue CANCEL_RELOAD_ON_ACTION;
+    public static final ModConfigSpec.BooleanValue CANCEL_AIM_ON_ACTION;
+    public static final ModConfigSpec.BooleanValue FORCE_CANCEL_AIM_WHILE_SPRINTING;
+    public static final ModConfigSpec.IntValue STAMINA_REGEN_DELAY;
 
     static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
         builder.push("Combat Mechanics");
 
@@ -63,3 +62,4 @@ public class EpicScorchConfig {
         SPEC = builder.build();
     }
 }
+
