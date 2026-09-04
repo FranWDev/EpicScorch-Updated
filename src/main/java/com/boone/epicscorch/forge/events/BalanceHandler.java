@@ -1,20 +1,28 @@
 package com.boone.epicscorch.forge.events;
 
+import com.boone.epicscorch.config.EpicScorchConfig;
+import com.boone.epicscorch.mixins.scg.AimingHandlerAccessor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Item;
 import net.minecraft.client.gui.screens.PauseScreen;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animation.AnimationController;
 import top.ribs.scguns.client.handler.AimingHandler;
 import top.ribs.scguns.client.handler.ReloadHandler;
 import top.ribs.scguns.client.network.ClientPlayHandler;
@@ -26,14 +34,8 @@ import top.ribs.scguns.item.animated.AnimatedGunItem;
 import top.ribs.scguns.network.PacketHandler;
 import top.ribs.scguns.network.message.C2SMessageAim;
 import top.ribs.scguns.network.message.C2SMessageReload;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.core.animation.AnimationController;
-import com.boone.epicscorch.config.EpicScorchConfig;
-import com.boone.epicscorch.mixins.scg.AimingHandlerAccessor;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
-
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * Client-side balance layer between Epic Fight and Scorched Guns.
@@ -42,7 +44,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  * state during a jump.
  */
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = "epicscorch", value = Dist.CLIENT)
+@EventBusSubscriber(modid = "epicscorch", value = Dist.CLIENT)
 public class BalanceHandler {
 
     private static int inActionTicks = 0;
@@ -133,8 +135,8 @@ public class BalanceHandler {
         if (player == null)
             return false;
 
-        boolean isStopping = player.getMainHandItem().getOrCreateTag()
-                .getBoolean("scguns:IsPlayingReloadStop");
+        CompoundTag tag = getStackTag(player.getMainHandItem());
+        boolean isStopping = tag != null && tag.getBoolean("scguns:IsPlayingReloadStop");
 
         return shouldBlockAiming(player)
                 || shouldBlockReloading(player)
@@ -149,10 +151,7 @@ public class BalanceHandler {
      * always sees a clean, non-blocking reload state.
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onClientTickPre(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START)
-            return;
-
+    public static void onClientTickPre(ClientTickEvent.Pre event) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null)
             return;
@@ -179,30 +178,35 @@ public class BalanceHandler {
                 if (wasManualReloadLastTick) {
                     ModSyncedDataKeys.RELOADING.setValue(player, false);
                     ModSyncedDataKeys.AIMING.setValue(player, false);
-                    top.ribs.scguns.network.PacketHandler.getPlayChannel().sendToServer(new top.ribs.scguns.network.message.C2SMessageReload(false));
-                    top.ribs.scguns.network.PacketHandler.getPlayChannel().sendToServer(new top.ribs.scguns.network.message.C2SMessageAim(false));
+                    PacketHandler.getPlayChannel().sendToServer(new C2SMessageReload(false));
+                    PacketHandler.getPlayChannel().sendToServer(new C2SMessageAim(false));
                     reloadCancelCooldown = 10;
                 
                     // Clear any guns in inventory to remove lingering states before setting up new one
                     for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
                         ItemStack invStack = player.getInventory().getItem(i);
-                        if (invStack.getItem() instanceof GunItem && invStack.hasTag()) {
+                        if (invStack.getItem() instanceof GunItem) {
                             // Skip clearing the new held item if we swapped to another gun!
                             if (currentSlot == i) {
                                 continue;
                             }
-                            clearReloadNbt(invStack.getOrCreateTag());
+                            CompoundTag invTag = getStackTag(invStack);
+                            if (invTag != null) {
+                                clearReloadNbt(invTag);
+                                setStackTag(invStack, invTag);
+                            }
                         }
                     }
                 } else {
                     if (previousSlot >= 0 && previousSlot < player.getInventory().getContainerSize()) {
                         ItemStack previousStack = player.getInventory().getItem(previousSlot);
                         if (previousStack.getItem() instanceof GunItem) {
-                            CompoundTag previousTag = previousStack.getOrCreateTag();
+                            CompoundTag previousTag = getOrCreateStackTag(previousStack);
                             if (previousStack.getItem() instanceof AnimatedGunItem animated) {
                                 animated.cleanupReloadState(previousTag);
                             }
                             clearReloadNbt(previousTag);
+                            setStackTag(previousStack, previousTag);
                         }
                     }
 
@@ -218,7 +222,7 @@ public class BalanceHandler {
         wasManualReloadLastTick = false;
 
         if (currentItem instanceof GunItem gunItem) {
-            CompoundTag tag = heldItem.getTag();
+            CompoundTag tag = getStackTag(heldItem);
             if (tag != null) {
                 wasReloadingLastTick = tag.getBoolean("scguns:IsReloading") ||
                     tag.getString("scguns:ReloadState").contains("RELOAD") ||
@@ -234,7 +238,7 @@ public class BalanceHandler {
 
         // --- NBT guarantees (must run before AimingHandler reads the item tag) ---
         if (heldItem.getItem() instanceof GunItem) {
-            CompoundTag tag = heldItem.getOrCreateTag();
+            CompoundTag tag = getOrCreateStackTag(heldItem);
 
             // Re-stamp every tick: server syncs wipe client-only tags.
             tag.putBoolean("epicscorch:Initialized", true);
@@ -256,7 +260,7 @@ public class BalanceHandler {
 
                     if (serverReloading) {
                         ModSyncedDataKeys.RELOADING.setValue(player, false);
-                        top.ribs.scguns.network.PacketHandler.getPlayChannel().sendToServer(new top.ribs.scguns.network.message.C2SMessageReload(false));
+                        PacketHandler.getPlayChannel().sendToServer(new C2SMessageReload(false));
                     }
 
                     if (heldItem.getItem() instanceof AnimatedGunItem animated) {
@@ -267,7 +271,7 @@ public class BalanceHandler {
                 tag.remove("epicscorch:StopTicks");
             }
 
-
+            setStackTag(heldItem, tag);
         }
 
         // --- Restriction state ---
@@ -289,10 +293,7 @@ public class BalanceHandler {
 
     /** Post-tick enforcement of restrictions and animation desync correction. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onClientTickPost(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START)
-            return;
-
+    public static void onClientTickPost(ClientTickEvent.Post event) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null)
             return;
@@ -301,7 +302,7 @@ public class BalanceHandler {
         boolean isStoppingReload = false;
 
         if (heldItem.getItem() instanceof GunItem) {
-            CompoundTag tag = heldItem.getOrCreateTag();
+            CompoundTag tag = getOrCreateStackTag(heldItem);
             boolean serverReloading = ModSyncedDataKeys.RELOADING.getValue(player);
 
             if (!serverReloading && heldItem.getItem() instanceof AnimatedGunItem animated) {
@@ -309,6 +310,7 @@ public class BalanceHandler {
             }
 
             isStoppingReload = tag.getBoolean("scguns:IsPlayingReloadStop");
+            setStackTag(heldItem, tag);
         }
 
         boolean blockAim = shouldBlockAiming(player) || restrictionCooldown > 0
@@ -345,13 +347,12 @@ public class BalanceHandler {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.START || event.side.isServer())
-            return;
-
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || player != event.player)
-            return;
+    public static void onPlayerTick(PlayerTickEvent.Pre event) {
+        if (event.getEntity().level().isClientSide()) {
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null || player != event.getEntity())
+                return;
+        }
     }
 
     /**
@@ -385,6 +386,7 @@ public class BalanceHandler {
         clearReloadNbt(tag);
         tag.remove("scguns:ReloadState");
         animated.cleanupReloadState(tag);
+        setStackTag(stack, tag);
 
         try {
             long id = GeoItem.getId(stack);
@@ -429,7 +431,7 @@ public class BalanceHandler {
             return;
         }
 
-        CompoundTag tag = heldItem.getOrCreateTag();
+        CompoundTag tag = getOrCreateStackTag(heldItem);
         String reloadState = tag.getString("scguns:ReloadState");
 
         boolean isActuallyReloading = reloadState.equals("RELOAD")
@@ -452,7 +454,10 @@ public class BalanceHandler {
                     animated.cleanupReloadState(tag);
                     clearReloadNbt(tag);
                     tag.remove("scguns:ReloadState");
+                    setStackTag(heldItem, tag);
                     resetGeckolibToIdle(heldItem, animated);
+                } else {
+                    setStackTag(heldItem, tag);
                 }
 
                 reloadCancelCooldown = 10;
@@ -472,6 +477,7 @@ public class BalanceHandler {
 
                 if (heldItem.getItem() instanceof AnimatedGunItem animated) {
                     animated.cleanupReloadState(tag);
+                    setStackTag(heldItem, tag);
                     throttledGeckolibReset(heldItem, animated);
                 }
 
@@ -485,6 +491,7 @@ public class BalanceHandler {
                 }
 
                 clearReloadNbt(tag);
+                setStackTag(heldItem, tag);
                 reloadCancelCooldown = 10;
             }
         }
@@ -542,6 +549,24 @@ public class BalanceHandler {
         if (manager == null)
             return null;
         return manager.getAnimationControllers().get("controller");
+    }
+
+    public static CompoundTag getStackTag(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data != null && !data.isEmpty() ? data.copyTag() : null;
+    }
+
+    public static CompoundTag getOrCreateStackTag(ItemStack stack) {
+        CompoundTag tag = getStackTag(stack);
+        return tag != null ? tag : new CompoundTag();
+    }
+
+    public static void setStackTag(ItemStack stack, CompoundTag tag) {
+        if (tag == null || tag.isEmpty()) {
+            stack.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
     }
 
     /** Clears all reload-related NBT tags. */

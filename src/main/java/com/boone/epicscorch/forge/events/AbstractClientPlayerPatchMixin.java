@@ -3,17 +3,14 @@ package com.boone.epicscorch.forge.events;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import top.ribs.scguns.client.KeyBinds;
+import net.minecraft.world.item.component.CustomData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import top.ribs.scguns.client.handler.AimingHandler;
 import top.ribs.scguns.client.handler.ReloadHandler;
 import top.ribs.scguns.init.ModSyncedDataKeys;
@@ -23,19 +20,24 @@ import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
-import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
-
-import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.event.EpicFightClientEventHooks;
+import yesman.epicfight.api.client.event.types.entity.ModifyPlayerLivingMotionEvent;
 
 @OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(modid = "epicscorch", bus = EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class AbstractClientPlayerPatchMixin {
 
     private static final int AIM_LEAVE_HYSTERESIS = 10; // Increased to bridge roll gaps
     private static final Map<UUID, Integer> aimHoldCounters = new HashMap<>();
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onCompositeMotion(UpdatePlayerMotionEvent.CompositeLayer event) {
+    public static void register() {
+        EpicFightClientEventHooks.Entity.MODIFY_PLAYER_LIVING_MOTION_COMPOSITE.registerEvent(
+            AbstractClientPlayerPatchMixin::onCompositeMotion,
+            "epicscorch_motion_composite",
+            -1000
+        );
+    }
+
+    public static void onCompositeMotion(ModifyPlayerLivingMotionEvent.CompositeLayer event) {
         if (!(event.getPlayerPatch().getOriginal() instanceof AbstractClientPlayer))
             return;
         AbstractClientPlayer player = (AbstractClientPlayer) event.getPlayerPatch().getOriginal();
@@ -91,7 +93,7 @@ public class AbstractClientPlayerPatchMixin {
         }
     }
 
-    private static void handleReloadLooping(AbstractClientPlayer player, UpdatePlayerMotionEvent.CompositeLayer event) {
+    private static void handleReloadLooping(AbstractClientPlayer player, ModifyPlayerLivingMotionEvent.CompositeLayer event) {
         if (!event.getPlayerPatch().isLogicalClient())
             return;
 
@@ -104,8 +106,8 @@ public class AbstractClientPlayerPatchMixin {
 
             if (reloadLayer != null && reloadLayer.animationPlayer.isEnd()) {
                 ItemStack stack = player.getMainHandItem();
-                CompoundTag tag = stack.getOrCreateTag();
-                String reloadState = tag.getString("scguns:ReloadState");
+                CompoundTag tag = BalanceHandler.getStackTag(stack);
+                String reloadState = tag != null ? tag.getString("scguns:ReloadState") : "";
 
                 if (reloadState.equals("RELOAD") || reloadState.equals("LOADING") || 
                     reloadState.equals("RELOAD_LOOP") || reloadState.equals("START") || 
@@ -135,7 +137,7 @@ public class AbstractClientPlayerPatchMixin {
         if (!(stack.getItem() instanceof GunItem))
             return false;
 
-        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag tag = BalanceHandler.getStackTag(stack);
         if (isStoppingReload(stack))
             return false;
 
@@ -144,6 +146,9 @@ public class AbstractClientPlayerPatchMixin {
 
         if (ModSyncedDataKeys.RELOADING.getValue(player))
             return true;
+
+        if (tag == null)
+            return false;
 
         String reloadState = tag.getString("scguns:ReloadState");
 
@@ -155,7 +160,10 @@ public class AbstractClientPlayerPatchMixin {
         if (!(stack.getItem() instanceof GunItem))
             return false;
 
-        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag tag = BalanceHandler.getStackTag(stack);
+        if (tag == null)
+            return false;
+
         return tag.getBoolean("scguns:IsPlayingReloadStop")
                 || "STOP".equals(tag.getString("scguns:ReloadState"))
                 || "STOPPING".equals(tag.getString("scguns:ReloadState"))
@@ -168,7 +176,10 @@ public class AbstractClientPlayerPatchMixin {
         if (!(stack.getItem() instanceof GunItem))
             return false;
 
-        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag tag = BalanceHandler.getStackTag(stack);
+        if (tag == null)
+            return false;
+
         return tag.getBoolean("IsDrawing") && tag.getInt("DrawnTick") < 15;
     }
 }
