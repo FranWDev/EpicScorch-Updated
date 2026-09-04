@@ -1,11 +1,11 @@
 # Epic Scorch: Reforged
 
 ![Status](https://img.shields.io/badge/Status-In%20Development-orange)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-blue)
-![Forge](https://img.shields.io/badge/Forge-47.4.20-red)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-blue)
+![NeoForge](https://img.shields.io/badge/NeoForge-21.1.219-orange)
 ![License](https://img.shields.io/badge/License-GPLv3-green)
 
-**Epic Scorch: Reforged** is an unofficial update and expansion of the original [Epic Scorch](https://www.curseforge.com/minecraft/mc-mods/epic-scorch-epic-fight-x-scorched-guns) mod. It acts as a bridge between **Epic Fight** and **Scorched Guns**, bringing modern compatibility and enhanced gameplay mechanics to Minecraft 1.20.1.
+**Epic Scorch: Reforged** is an unofficial update and expansion of the original [Epic Scorch](https://www.curseforge.com/minecraft/mc-mods/epic-scorch-epic-fight-x-scorched-guns) mod. It acts as a bridge between **Epic Fight** and **Scorched Guns**, bringing modern compatibility and enhanced gameplay mechanics to Minecraft 1.21.1 on NeoForge.
 
 While the original mod focused solely on animation bridging, this reforge introduces a hybrid animation system and a comprehensive combat balancing layer to make firearm usage more tactical and integrated with the Epic Fight experience.
 
@@ -28,16 +28,18 @@ Firearms are now more than just point-and-click; they are integrated into the st
 - **Full Customization:** Every balancing feature can be tweaked or disabled via the mod's configuration file.
 
 ## 🗺️ Roadmap
-- [ ] **Rat King & Queen Weaponry:** Figure out how to implement animations for these guns (currently lacking compatible animations).
+- [ ] **Rat King & Queen Weaponry:** Implement animations and capability presets for these unique weapons.
 - [ ] **Agility Enchantment:** A new enchantment designed to reduce combat movement restrictions for high-tier builds.
 - [ ] **Expanded Compatibility:** Reviewing interactions with mods like *Epic Parcool* and reaction to stun effects.
-- [ ] **Stability:** Working towards a fully stable port/bridge release in the coming weeks.
+- [ ] **Stability:** Continuous improvements and compatibility validation for the 1.21.1 NeoForge ecosystem.
 
 ## ✅ Tested Versions
 The mod has been verified to work correctly with the following versions:
-- **Forge:** 47.4.20
-- **Epic Fight:** 20.14.16
-- **Scorched Guns 2:** 0.5.5
+- **Minecraft:** 1.21.1
+- **NeoForge:** 21.1.219
+- **Epic Fight:** 21.13.1 / 21.17.0+
+- **Scorched Guns:** 1.0.4+
+- **GeckoLib:** 4.5+ / 4.7+
 
 ## 🤝 Contributing
 Contributions are welcome! Whether it's reporting bugs, suggesting features, or submitting Pull Requests, your help is appreciated. 
