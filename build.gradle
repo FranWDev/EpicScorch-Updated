@@ -1,5 +1,5 @@
 plugins {
-    id 'net.neoforged.moddev.legacyforge' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.78'
 }
 
 group = mod_group_id
@@ -10,20 +10,24 @@ base {
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
-legacyForge {
-    version = "${minecraft_version}-${forge_version}"
-    
-    parchment {
-        mappingsVersion = '2023.09.03'
-        minecraftVersion = '1.20.1'
-    }
+neoForge {
+    version = project.neoforge_version
 
     runs {
         client {
             client()
+        }
+        server {
+            server()
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet project.sourceSets.main
         }
     }
 }
@@ -32,15 +36,18 @@ repositories {
     maven {
         url = "https://cursemaven.com"
     }
+    maven {
+        url = "https://maven.neoforged.net/releases"
+    }
     mavenCentral()
 }
 
 dependencies {
-    modImplementation "curse.maven:epic-fight-mod-405076:7919289"
-    modImplementation "curse.maven:scorched-guns-2-802940:7232063"
-    modImplementation "curse.maven:framework-549225:5911986"
-    modImplementation "curse.maven:geckolib-388172:5675221"
-    modImplementation "curse.maven:curios-309927:6418456"
+    implementation "curse.maven:epic-fight-mod-405076:8175609"
+    implementation "curse.maven:scorched-guns-neoforged-1538807:8299074"
+    implementation "curse.maven:framework-549225:7530361"
+    implementation "curse.maven:curios-309927:6529130"
+    implementation "curse.maven:geckolib-388172:8350073"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -54,7 +61,7 @@ tasks.named('processResources', ProcessResources).configure {
     ]
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+    filesMatching(['META-INF/neoforge.mods.toml', 'META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
 }
@@ -66,3 +73,4 @@ tasks.named('jar', Jar).configure {
         ])
     }
 }
+
