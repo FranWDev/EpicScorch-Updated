@@ -1,12 +1,16 @@
 package com.boone.epicscorch.forge;
 
-import com.boone.epicscorch.forge.world.capabilities.items.GunOwnerCapabilityProvider;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
+import com.boone.epicscorch.EpicScorch;
+import java.util.function.Supplier;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 public class ModCapabilities {
-   public static final Capability<GunOwnerCapabilityProvider.OwnerId> OWNER_ID = CapabilityManager.get(
-      new CapabilityToken<GunOwnerCapabilityProvider.OwnerId>() {}
-   );
+   public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+      DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, EpicScorch.MOD_ID);
+
+   public static final Supplier<AttachmentType<Integer>> OWNER_ID =
+      ATTACHMENT_TYPES.register("owner_id", () -> AttachmentType.builder(() -> -1).build());
 }
+
