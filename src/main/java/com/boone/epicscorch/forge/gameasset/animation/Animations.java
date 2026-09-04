@@ -3,9 +3,8 @@ package com.boone.epicscorch.forge.gameasset.animation;
 import com.boone.epicscorch.forge.gameasset.animation.type.GunAimAnimation;
 import com.boone.epicscorch.forge.gameasset.animation.type.GunMoveAnimation;
 import com.boone.epicscorch.forge.gameasset.animation.type.LockedAnimation;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationManager.AnimationBuilder;
 import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
@@ -15,8 +14,9 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.model.armature.HumanoidArmature;
 
-@EventBusSubscriber(modid = "epicscorch", bus = Bus.MOD)
+@EventBusSubscriber(modid = "epicscorch", bus = EventBusSubscriber.Bus.MOD)
 public class Animations {
+
    public static AnimationAccessor<GunAimAnimation> BIPED_HOLD_PISTOL;
    public static AnimationAccessor<GunMoveAnimation> BIPED_WALK_PISTOL;
    public static AnimationAccessor<GunMoveAnimation> BIPED_RUN_PISTOL;

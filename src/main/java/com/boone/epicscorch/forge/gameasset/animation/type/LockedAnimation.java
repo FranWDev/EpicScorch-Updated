@@ -1,9 +1,11 @@
 package com.boone.epicscorch.forge.gameasset.animation.type;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import org.joml.Quaternionf;
 import top.ribs.scguns.item.GunItem;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
@@ -46,7 +48,10 @@ public class LockedAnimation extends StaticAnimation {
       ItemStack stack = entity.getMainHandItem();
       if (!(stack.getItem() instanceof GunItem)) return false;
 
-      CompoundTag tag = stack.getOrCreateTag();
+      CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+      if (customData == null) return false;
+
+      CompoundTag tag = customData.copyTag();
       String reloadState = tag.getString("scguns:ReloadState");
       
       // "RELOAD" signifies an active multi-stage reload in Scorched Guns.

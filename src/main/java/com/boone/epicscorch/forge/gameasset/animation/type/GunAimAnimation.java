@@ -1,7 +1,9 @@
 package com.boone.epicscorch.forge.gameasset.animation.type;
 
+import java.lang.reflect.Method;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.joml.Quaternionf;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.JointTransform;
@@ -14,9 +16,12 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 
 public class GunAimAnimation extends AimAnimation {
+   private static Method isAimingMethod = null;
+   private static Object aimingHandlerInstance = null;
+   private static boolean initialized = false;
+
    public GunAimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
       super(transitionTime, repeatPlay, accessor, path1, path2, path3, path4, armature);
 
@@ -40,28 +45,24 @@ public class GunAimAnimation extends AimAnimation {
       );
    }
 
-    private static java.lang.reflect.Method isAimingMethod = null;
-    private static Object aimingHandlerInstance = null;
-    private static boolean initialized = false;
-
-    private static boolean isAimingClientSafe() {
-        if (!initialized) {
-            try {
-                Class<?> handlerClass = Class.forName("top.ribs.scguns.client.handler.AimingHandler");
-                aimingHandlerInstance = handlerClass.getMethod("get").invoke(null);
-                isAimingMethod = handlerClass.getMethod("isAiming");
-            } catch (Exception ignored) {
-            }
-            initialized = true;
-        }
-        if (isAimingMethod != null && aimingHandlerInstance != null) {
-            try {
-                return (boolean) isAimingMethod.invoke(aimingHandlerInstance);
-            } catch (Exception ignored) {
-            }
-        }
-        return false;
-    }
+   private static boolean isAimingClientSafe() {
+      if (!initialized) {
+         try {
+            Class<?> handlerClass = Class.forName("top.ribs.scguns.client.handler.AimingHandler");
+            aimingHandlerInstance = handlerClass.getMethod("get").invoke(null);
+            isAimingMethod = handlerClass.getMethod("isAiming");
+         } catch (Exception ignored) {
+         }
+         initialized = true;
+      }
+      if (isAimingMethod != null && aimingHandlerInstance != null) {
+         try {
+            return (boolean) isAimingMethod.invoke(aimingHandlerInstance);
+         } catch (Exception ignored) {
+         }
+      }
+      return false;
+   }
 
    @Override
    public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
@@ -86,3 +87,4 @@ public class GunAimAnimation extends AimAnimation {
       }
    }
 }
+
