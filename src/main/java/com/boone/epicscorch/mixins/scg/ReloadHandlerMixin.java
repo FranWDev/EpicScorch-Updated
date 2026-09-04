@@ -5,8 +5,8 @@ import com.boone.epicscorch.forge.events.BalanceHandler;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,7 +30,7 @@ public abstract class ReloadHandlerMixin {
     };
 
     @Redirect(
-        method = "onMouseInput(Lnet/minecraftforge/client/event/InputEvent$MouseButton;)V",
+        method = "onMouseInput(Lnet/neoforged/neoforge/client/event/InputEvent$MouseButton$Post;)V",
         at = @At(value = "INVOKE",
                  target = "Ltop/ribs/scguns/client/KeyBinds;getAimMapping()Lnet/minecraft/client/KeyMapping;",
                  remap = false)
@@ -41,7 +41,7 @@ public abstract class ReloadHandlerMixin {
                 : KeyBinds.getAimMapping();
     }
 
-    @Inject(method = "onKeyPressed", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "onKeyPressed(Lnet/neoforged/neoforge/client/event/InputEvent$Key;)V", at = @At("HEAD"), cancellable = true)
     private void epicscorch$blockReloadStart(InputEvent.Key event, CallbackInfo ci) {
         if (!EpicScorchConfig.CANCEL_RELOAD_ON_ACTION.get()) return;
 
@@ -55,8 +55,8 @@ public abstract class ReloadHandlerMixin {
      * No-op injection retained as a placeholder.
      * Reload-tick logic is managed centrally by {@link BalanceHandler}.
      */
-    @Inject(method = "onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V", at = @At("HEAD"))
-    private void epicscorch$onClientTickHead(TickEvent.ClientTickEvent event, CallbackInfo ci) {
+    @Inject(method = "onClientTick(Lnet/neoforged/neoforge/client/event/ClientTickEvent$Post;)V", at = @At("HEAD"))
+    private void epicscorch$onClientTickHead(ClientTickEvent.Post event, CallbackInfo ci) {
         // Handled in BalanceHandler.
     }
 }

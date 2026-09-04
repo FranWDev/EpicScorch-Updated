@@ -3,7 +3,7 @@ package com.boone.epicscorch.mixins.scg;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,14 +15,14 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.events.engine.RenderEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 
-@Mixin(value = RenderEngine.Events.class, remap = false)
+@Mixin(value = RenderEngine.class, remap = false)
 public abstract class RenderEngineMixin {
 
     @Unique
     private static boolean epicscorch$wasInaction = false;
 
-    @Inject(method = "renderHand", at = @At("HEAD"), cancellable = true)
-    private static void epicscorch$skipFirstPersonOverride(RenderHandEvent event, CallbackInfo ci) {
+    @Inject(method = "epicfight$renderHand(Lnet/neoforged/neoforge/client/event/RenderHandEvent;)V", at = @At("HEAD"), cancellable = true)
+    private void epicscorch$skipFirstPersonOverride(RenderHandEvent event, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 

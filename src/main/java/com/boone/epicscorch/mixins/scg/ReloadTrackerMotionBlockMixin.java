@@ -1,10 +1,14 @@
 package com.boone.epicscorch.mixins.scg;
 
 import com.boone.epicscorch.config.EpicScorchConfig;
+import java.util.Map;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
+import net.minecraft.world.item.component.CustomData;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,8 +21,6 @@ import top.ribs.scguns.item.animated.AnimatedGunItem;
 import top.ribs.scguns.network.PacketHandler;
 import top.ribs.scguns.network.message.S2CMessageStopReload;
 
-import java.util.Map;
-
 /**
  * Server-side reload interrupt based on sprint.
  * Cancels reloading if the player sprints. Jumping does not cancel the reload.
@@ -27,19 +29,17 @@ import java.util.Map;
 public abstract class ReloadTrackerMotionBlockMixin {
 
     @Shadow
-    private static Map<net.minecraft.world.entity.player.Player, ReloadTracker> RELOAD_TRACKER_MAP;
+    private static Map<Player, ReloadTracker> RELOAD_TRACKER_MAP;
 
     @Inject(
-        method = "onPlayerTick",
+        method = "onPlayerTick(Lnet/neoforged/neoforge/event/tick/PlayerTickEvent$Pre;)V",
         at = @At("HEAD"),
         remap = false,
         cancellable = true
     )
-    private static void blockReloadDuringSprint(TickEvent.PlayerTickEvent event, CallbackInfo ci) {
-        if (event.phase != TickEvent.Phase.START) return;
-        if (!(event.player instanceof ServerPlayer player)) return;
+    private static void blockReloadDuringSprint(PlayerTickEvent.Pre event, CallbackInfo ci) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!EpicScorchConfig.CANCEL_RELOAD_ON_ACTION.get()) return;
-
 
         boolean shouldCancel = player.isSprinting()
                 && ModSyncedDataKeys.RELOADING.getValue(player);
@@ -48,7 +48,8 @@ public abstract class ReloadTrackerMotionBlockMixin {
 
         ItemStack heldItem = player.getMainHandItem();
         if (heldItem.getItem() instanceof GunItem) {
-            CompoundTag tag = heldItem.getOrCreateTag();
+            CustomData customData = heldItem.get(DataComponents.CUSTOM_DATA);
+            CompoundTag tag = customData != null && !customData.isEmpty() ? customData.copyTag() : new CompoundTag();
             boolean hasReloadTag = tag.getBoolean("IsReloading") || tag.getBoolean("scguns:IsReloading");
             if (!ModSyncedDataKeys.RELOADING.getValue(player) && !hasReloadTag) return;
 
@@ -68,6 +69,12 @@ public abstract class ReloadTrackerMotionBlockMixin {
             tag.remove("Reloading");
             tag.remove("scguns:Reloading");
             tag.remove("scguns:ShouldStopAfterLoop");
+
+            if (tag.isEmpty()) {
+                heldItem.remove(DataComponents.CUSTOM_DATA);
+            } else {
+                heldItem.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+            }
 
             PacketHandler.getPlayChannel().sendToPlayer(() -> player, new S2CMessageStopReload());
         }

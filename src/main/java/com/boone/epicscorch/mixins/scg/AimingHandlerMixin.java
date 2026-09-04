@@ -2,18 +2,12 @@ package com.boone.epicscorch.mixins.scg;
 
 import com.boone.epicscorch.forge.events.BalanceHandler;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraftforge.event.TickEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import top.ribs.scguns.client.KeyBinds;
 import top.ribs.scguns.client.handler.AimingHandler;
-import top.ribs.scguns.init.ModSyncedDataKeys;
 
 /**
  * Intercepts AimingHandler to enforce movement restrictions.
@@ -32,7 +26,7 @@ public abstract class AimingHandlerMixin {
         }
     };
 
-    @Redirect(method = "onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V", at = @At(value = "INVOKE", target = "Ltop/ribs/scguns/client/KeyBinds;getAimMapping()Lnet/minecraft/client/KeyMapping;", remap = false))
+    @Redirect(method = "onClientTick(Lnet/neoforged/neoforge/client/event/ClientTickEvent$Pre;)V", at = @At(value = "INVOKE", target = "Ltop/ribs/scguns/client/KeyBinds;getAimMapping()Lnet/minecraft/client/KeyMapping;", remap = false))
     private KeyMapping epicscorch$getAimMapping() {
         return BalanceHandler.isCurrentlyRestricted()
                 ? DUMMY_MAPPING

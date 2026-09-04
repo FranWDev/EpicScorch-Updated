@@ -1,12 +1,11 @@
 package com.boone.epicscorch.mixins;
 
+import java.util.List;
+import java.util.Set;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-
-import java.util.List;
-import java.util.Set;
 
 public class EpicScorchMixinPlugin implements IMixinConfigPlugin {
     @Override

@@ -13,14 +13,19 @@ import yesman.epicfight.api.animation.types.EntityState;
 
 import top.ribs.scguns.init.ModSyncedDataKeys;
 
+import java.util.Optional;
 import java.util.function.Supplier;
+import net.minecraft.world.entity.player.Player;
 
 @Mixin(C2SMessageGunLoaded.class)
 public class C2SMessageGunLoadedMixin {
 
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
-    private void preventLoadedDuringAction(C2SMessageGunLoaded message, MessageContext context, CallbackInfo ci) {
-        ServerPlayer player = context.getPlayer();
+    private static void preventLoadedDuringAction(C2SMessageGunLoaded message, MessageContext context, CallbackInfo ci) {
+        ServerPlayer player = context.getPlayer()
+                .filter(ServerPlayer.class::isInstance)
+                .map(ServerPlayer.class::cast)
+                .orElse(null);
         if (player == null) return;
 
         // If the player is airborne, skip the RELOADING check entirely.

@@ -19,7 +19,7 @@ public abstract class SkillContainerMixin {
     private void epicscorch$blockComboSkillRequest(LocalPlayerPatch executor, ControlEngine controlEngine, CallbackInfoReturnable<SkillCastEvent> cir) {
         SkillContainer container = (SkillContainer) (Object) this;
         
-        if (container.getSlot() == SkillSlots.BASIC_ATTACK) {
+        if (container.getSlot() == SkillSlots.COMBO_ATTACKS) {
             ItemStack stack = executor.getOriginal().getMainHandItem();
             if (stack.getItem() instanceof GunItem) {
 
